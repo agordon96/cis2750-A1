@@ -9,8 +9,8 @@ CalendarParser.o: src/CalendarParser.c
 list: LinkedListAPI.o
 	ar cr bin/libllist.a LinkedListAPI.o
 
-parser: CalendarParser.o
-	ar cr bin/libcparse.a CalendarParser.o
+parser: CalendarParser.o LinkedListAPI.o
+	ar cr bin/libcparse.a CalendarParser.o LinkedListAPI.o
 
 program:
 	gcc -Iinclude -o Demo Demo.c bin/libllist.a bin/libcparse.a -Wall -std=c11

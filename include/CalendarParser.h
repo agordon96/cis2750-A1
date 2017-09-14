@@ -1,3 +1,4 @@
+//Aaron Gordon 0884023
 #ifndef CALENDARPARSER_H
 #define CALENDARPARSER_H
 
@@ -14,19 +15,19 @@ typedef enum ers {OK, INV_FILE, INV_CAL, INV_VER, DUP_VER, INV_PRODID, DUP_PRODI
 //Represents iCalendar Date-time
 typedef struct dt {
 	//YYYYMMDD
-	char date[9]; 
+	char date[9];
 	//hhmmss
-	char time[7]; 
+	char time[7];
 	//indicates whether this is UTC time
-	bool	UTC;  
+	bool	UTC;
 } DateTime;
 
 //Represents a generic iCalendar property
 typedef struct prop {
 	//Property name.  We will assume that the property name, even if malformed, does not exceed 200 bytes
-	char 	propName[200]; 
+	char 	propName[200];
 	//Property description.  We use a C99 flexible array member, which we will discuss in class.
-	char	propDescr[]; 
+	char	propDescr[];
 } Property;
 
 //Represents an iCalendar alarm component
@@ -49,7 +50,7 @@ typedef struct evt {
 	List 	    properties;
 	//List of alarms associated with the event.  All objects in the list will be of type Alarm.  It may be empty.
     List        alarms;
-	
+
 } Event;
 
 //Represents an iCalendar object
@@ -70,8 +71,8 @@ typedef struct ical {
        File represented by this name must exist and must be readable.
  *@post Either:
         A valid calendar has been created, its address was stored in the variable obj, and OK was returned
-		or 
-		An error occurred, the calendar was not created, all temporary memory was freed, obj was set to NULL, and the 
+		or
+		An error occurred, the calendar was not created, all temporary memory was freed, obj was set to NULL, and the
 		appropriate error code was returned
  *@return the error code indicating success or the error encountered when parsing the calendar
  *@param fileName - a string containing the name of the iCalendar file
@@ -95,14 +96,14 @@ void deleteCalendar(Calendar* obj);
  *@return a string contaning a humanly readable representation of a Calendar object
  *@param obj - a pointer to a Calendar struct
 **/
-char* printCalendar(const Calendar* obj); 
+char* printCalendar(const Calendar* obj);
 
 
 /** Function to "convert" the ErrorCode into a humanly redabale string.
- *@return a string contaning a humanly readable representation of the error code by indexing into 
+ *@return a string contaning a humanly readable representation of the error code by indexing into
           the descr array using rhe error code enum value as an index
  *@param err - an error code
 **/
-const char* printError(ErrorCode err);   
+const char* printError(ErrorCode err);
 
-#endif	
+#endif

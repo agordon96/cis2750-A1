@@ -16,7 +16,6 @@ Node *initializeNode(void *data) {
   Node *node;
 
   if(!data) {
-    printf("Data is invalid.");
     return NULL;
   }
 
@@ -32,7 +31,6 @@ void insertFront(List *list, void *toBeAdded) {
   Node *node;
 
   if(!list) {
-    printf("List does not exist.");
     return;
   }
 
@@ -51,7 +49,6 @@ void insertBack(List *list, void *toBeAdded) {
   Node *node;
 
   if(!list) {
-    printf("List does not exist.");
     return;
   }
 
@@ -71,7 +68,6 @@ void clearList(List *list) {
   Node *next;
 
   if(!list) {
-    printf("No list to clear.");
     return;
   }
 
@@ -89,7 +85,6 @@ void insertSorted(List *list, void *toBeAdded) {
   Node *curr;
 
   if(!list) {
-    printf("List does not exist.");
     return;
   }
 
@@ -98,7 +93,6 @@ void insertSorted(List *list, void *toBeAdded) {
 
   while(curr) {
     if(list->compare(toBeAdded, curr->data) < 0) {
-      printf("%d test here\n", list->compare(toBeAdded, curr->data));
       if(!curr->previous) {
         curr->previous = node;
         list->head = node;
@@ -130,12 +124,10 @@ void *deleteDataFromList(List *list, void *toBeDeleted) {
   Node *curr;
 
   if(!list) {
-    printf("List does not exist.");
     return NULL;
   }
 
   if(!list->head) {
-    printf("No nodes to remove.");
     return NULL;
   }
 
@@ -149,9 +141,7 @@ void *deleteDataFromList(List *list, void *toBeDeleted) {
     curr = curr->next;
   }
 
-  if(!curr) {
-    printf("Could not find node to remove.");
-  } else {
+  if(curr) {
     if(curr->previous) {
       curr->previous->next = curr->next;
     } else {
@@ -172,10 +162,8 @@ void *deleteDataFromList(List *list, void *toBeDeleted) {
 
 void *getFromFront(List list) {
   if(!list.head) {
-    printf("No nodes for list.");
     return NULL;
   } else if(!list.head->data) {
-    printf("No data for the head node.");
     return NULL;
   }
 
@@ -184,10 +172,8 @@ void *getFromFront(List list) {
 
 void *getFromBack(List list) {
   if(!list.tail) {
-    printf("No nodes for list.");
     return NULL;
   } else if(!list.tail->data) {
-    printf("No data for the tail node.");
     return NULL;
   }
 
@@ -221,10 +207,6 @@ char *toString(List list) {
 ListIterator createIterator(List list) {
   ListIterator iter;
 
-  if(!list.head) {
-    printf("List is invalid.");
-  }
-
   iter.current = list.head;
   return iter;
 }
@@ -233,10 +215,6 @@ void *nextElement(ListIterator *iter) {
   void *data;
 
   if(!iter || !iter->current) {
-    if(!iter) {
-      printf("Iterator is not valid.");
-    }
-
     return NULL;
   }
 
