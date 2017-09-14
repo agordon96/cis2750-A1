@@ -2,6 +2,16 @@
 #include "LinkedListAPI.h"
 #include "Helpers.h"
 
+ErrorCode badError(Calendar *cal, FILE *file, Calendar **obj, ErrorCode err) {
+  free(cal);
+  if(file) {
+    fclose(file);
+  }
+
+  obj = NULL;
+  return err;
+}
+
 char* printFuncProp(void *toBePrinted) {
   char *toReturn;
   Property *prop;
@@ -33,7 +43,7 @@ char* printFuncAlarm(void *toBePrinted) {
   sprintf(toReturn, "\t\tAction: %s\n\t\tTrigger: %s\n\t\tProperties:\n", alarm->action, alarm->trigger);
   len = strlen(toReturn);
 
-  if(&alarm->properties) {
+  if(alarm->properties.head) {
     node = alarm->properties.head;
     while(node) {
       temp = alarm->properties.printData(node->data);
@@ -81,14 +91,11 @@ int compareFuncAlarm(const void *first, const void *second) {
 }
 
 void deleteFuncProp(void *toBeDeleted) {
-  Property *prop;
-  printf("called prop\n");
-	if(!toBeDeleted) {
+  if(!toBeDeleted) {
     return;
   }
 
-  prop = (Property*)toBeDeleted;
-  free(prop);
+  free(toBeDeleted);
 }
 
 void deleteFuncAlarm(void *toBeDeleted) {
@@ -99,13 +106,15 @@ void deleteFuncAlarm(void *toBeDeleted) {
   }
 
   alarm = (Alarm*)toBeDeleted;
-  clearList(&alarm->properties);
+  if(alarm->properties.head) {
+    clearList(&alarm->properties);
+  }
 
   if(alarm->trigger) {
     free(alarm->trigger);
   }
 
-  free(alarm);
+  free(toBeDeleted);
 }
 
 void clearSpaces(char *toClear) {
@@ -135,26 +144,27 @@ ErrorCode createCalendar(char* fileName, Calendar** obj) {
   int isDtStart = 0;
   int isDtEnded = 0;
   int calEnded = 0;
+  int inAlarm = 0;
+  int inEvent = 0;
+  Alarm *alarm;
+  Property *prop;
   Calendar *cal = (Calendar*)malloc(sizeof(Calendar));
   FILE *file;
 
   cal->version = 0.0;
-  strcpy(cal->prodID, "");
   cal->event = NULL;
+  strcpy(cal->prodID, "");
+
+  strcpy(toIgnore, "");
 
   if(!obj) {
-    free(cal);
-    obj = NULL;
-    return INV_CAL;
+    return badError(cal, NULL, obj, INV_CAL);
   } else if(!fileName || strcmp(fileName, "") == 0) {
-    free(cal);
-    obj = NULL;
-    return INV_FILE;
+    return badError(cal, NULL, obj, INV_FILE);
   }
 
   tempFile = (char*)malloc(sizeof(char) * (strlen(fileName) + 1));
   strcpy(tempFile, fileName);
-  strcpy(toIgnore, "");
 
   token = strtok(tempFile, ".");
   if(token != NULL) {
@@ -162,34 +172,23 @@ ErrorCode createCalendar(char* fileName, Calendar** obj) {
   }
 
   if(!token || strcmp(token, "ics") != 0) {
-    free(cal);
     free(tempFile);
-    obj = NULL;
-    return INV_FILE;
+    return badError(cal, NULL, obj, INV_FILE);
   }
 
   free(tempFile);
   file = fopen(fileName, "r");
   if(!file) {
-    free(cal);
-    fclose(file);
-    obj = NULL;
-    return INV_FILE;
+    return badError(cal, NULL, obj, INV_FILE);
   }
 
   if(!fgets(line, sizeof(line), file)) {
-    free(cal);
-    fclose(file);
-    obj = NULL;
-    return INV_FILE;
+    return badError(cal, file, obj, INV_FILE);
   }
 
   clearSpaces(line);
   if(strcmp(line, "BEGIN:VCALENDAR") != 0) {
-    free(cal);
-    fclose(file);
-    obj = NULL;
-    return INV_CAL;
+    return badError(cal, file, obj, INV_CAL);
   }
 
   while(fgets(line, sizeof(line), file)) {
@@ -208,63 +207,44 @@ ErrorCode createCalendar(char* fileName, Calendar** obj) {
     }
 
     if(!token) {
-      free(cal);
-      fclose(file);
-      obj = NULL;
-      return INV_CAL;
+      return badError(cal, file, obj, INV_CAL);
     }
 
     if(strcmp(token, "VERSION") == 0) {
       if(cal->version != 0.0) {
-        free(cal);
-        fclose(file);
-        obj = NULL;
-        return DUP_VER;
+        return badError(cal, file, obj, DUP_VER);
       }
 
       token = strtok(NULL, "");
       cal->version = atof(token);
 
       if(cal->version == 0.0) {
-        free(cal);
-        fclose(file);
-        obj = NULL;
-        return INV_VER;
+        return badError(cal, file, obj, INV_VER);
       }
     } else if(strcmp(token, "PRODID") == 0) {
       if(strcmp(cal->prodID, "") != 0) {
-        free(cal);
-        fclose(file);
-        obj = NULL;
-        return DUP_PRODID;
+        return badError(cal, file, obj, DUP_PRODID);
       }
 
       token = strtok(NULL, "");
       if(!strcpy(cal->prodID, token)) {
-        free(cal);
-        fclose(file);
-        obj = NULL;
-        return INV_PRODID;
+        return badError(cal, file, obj, INV_PRODID);
       }
     } else if(strcmp(token, "BEGIN") == 0) {
       token = strtok(NULL, "");
-      if(strcmp(token, "VEVENT") != 0) {
+      if(strcmp(token, "VEVENT") != 0 || cal->event) {
         strcpy(toIgnore, token);
         continue;
       }
 
-      int eventEnded = 0;
+      inEvent = 1;
       cal->event = (Event*)malloc(sizeof(Event));
       strcpy(cal->event->UID, "");
       strcpy(cal->event->creationDateTime.date, "");
       cal->event->properties.head = NULL;
       cal->event->alarms.head = NULL;
 
-      int inAlarm = 0;
-      Alarm *alarm;
-      Property *prop;
-
-      while(fgets(line, sizeof(line), file) && !eventEnded) {
+      while(fgets(line, sizeof(line), file) && inEvent) {
         clearSpaces(line);
         token = strtok(line, ":;");
 
@@ -283,20 +263,14 @@ ErrorCode createCalendar(char* fileName, Calendar** obj) {
           token = strtok(NULL, "");
           if(strcmp(token, "VEVENT") == 0 && !inAlarm) {
             if(strcmp(cal->event->UID, "") == 0 || strcmp(cal->event->creationDateTime.date, "") == 0) {
-              free(cal);
-              fclose(file);
-              obj = NULL;
-              return INV_EVENT;
+              return badError(cal, file, obj, INV_EVENT);
             }
 
-            eventEnded = 1;
+            inEvent = 0;
             break;
           } else if(strcmp(token, "VALARM") == 0 && inAlarm) {
             if(!alarm || strcmp(alarm->action, "") == 0 || !alarm->trigger) {
-              free(cal);
-              fclose(file);
-              obj = NULL;
-              return INV_EVENT;
+              return badError(cal, file, obj, INV_EVENT);
             }
 
             if(!cal->event->alarms.head) {
@@ -306,10 +280,7 @@ ErrorCode createCalendar(char* fileName, Calendar** obj) {
             insertBack(&cal->event->alarms, (void*)alarm);
             inAlarm = 0;
           } else {
-            free(cal);
-            fclose(file);
-            obj = NULL;
-            return INV_EVENT;
+            return badError(cal, file, obj, INV_EVENT);
           }
         } else if(strcmp(token, "BEGIN") == 0) {
           token = strtok(NULL, "");
@@ -349,19 +320,13 @@ ErrorCode createCalendar(char* fileName, Calendar** obj) {
 
             token = strtok(NULL, "T");
             if(!token || strlen(token) != 8) {
-              free(cal);
-              fclose(file);
-              obj = NULL;
-              return INV_CREATEDT;
+              return badError(cal, file, obj, INV_CREATEDT);
             }
 
             strcpy(dt.date, token);
             token = strtok(NULL, "T");
             if(!token || strlen(token) != 7) {
-              free(cal);
-              fclose(file);
-              obj = NULL;
-              return INV_CREATEDT;
+              return badError(cal, file, obj, INV_CREATEDT);
             }
 
             dt.UTC = 0;
@@ -380,10 +345,7 @@ ErrorCode createCalendar(char* fileName, Calendar** obj) {
               isDtStart = 1;
             } else if((strcmp(token, "DTSTART") == 0 && isDtStart)
               || ((strcmp(token, "DTEND") == 0 || strcmp(token, "DURATION") == 0) && (!isDtStart || isDtEnded))) {
-              free(cal);
-              fclose(file);
-              obj = NULL;
-              return INV_EVENT;
+              return badError(cal, file, obj, INV_EVENT);
             } else if(strcmp(token, "DTEND") == 0 || strcmp(token, "DURATION") == 0) {
               isDtEnded = 1;
             }
@@ -402,19 +364,13 @@ ErrorCode createCalendar(char* fileName, Calendar** obj) {
         }
       }
 
-      if(!eventEnded || !cal->event->UID || (isDtStart && !isDtEnded)) {
-        free(cal);
-        fclose(file);
-        obj = NULL;
-        return INV_EVENT;
+      if(inEvent || !cal->event->UID || (isDtStart && !isDtEnded)) {
+        return badError(cal, file, obj, INV_EVENT);
       }
     } else if(strcmp(token, "END") == 0) {
       token = strtok(NULL, "");
       if(strcmp(token, "VCALENDAR") != 0) {
-        free(cal);
-        fclose(file);
-        obj = NULL;
-        return INV_CAL;
+        return badError(cal, file, obj, INV_CAL);
       }
 
       calEnded = 1;
@@ -422,10 +378,7 @@ ErrorCode createCalendar(char* fileName, Calendar** obj) {
   }
 
   if(!cal->version || strcmp(cal->prodID, "") == 0 || !cal->event || !calEnded) {
-    free(cal);
-    fclose(file);
-    obj = NULL;
-    return INV_CAL;
+    return badError(cal, file, obj, INV_CAL);
   }
 
   *obj = cal;
@@ -434,65 +387,20 @@ ErrorCode createCalendar(char* fileName, Calendar** obj) {
 }
 
 void deleteCalendar(Calendar* obj) {
-  Node *curr;
-  Node *next;
-  Node *propCurr;
-  Node *propNext;
-  Alarm *alarm;
-
   if(!obj) {
     return;
-  }
-
-  if(obj->event) {
+  } else if(obj->event) {
     if(obj->event->properties.head) {
-      curr = obj->event->properties.head;
-      while(curr) {
-        next = curr->next;
-        if(curr->data) {
-          free(curr->data);
-        }
-
-        free(curr);
-        curr = next;
-      }
+      clearList(&obj->event->properties);
     }
 
     if(obj->event->alarms.head) {
-      curr = obj->event->alarms.head;
-      while(curr) {
-        next = curr->next;
-        alarm = (Alarm*)curr->data;
-        if(alarm->trigger) {
-          free(alarm->trigger);
-        }
-
-        if(alarm->properties.head) {
-          propCurr = alarm->properties.head;
-          while(propCurr) {
-            propNext = propCurr->next;
-            if(propCurr->data) {
-              free(propCurr->data);
-            }
-
-            free(propCurr);
-            propCurr = propNext;
-          }
-        }
-
-        if(curr->data) {
-          free(curr->data);
-        }
-
-        free(curr);
-        curr = next;
-      }
+      clearList(&obj->event->alarms);
     }
 
     free(obj->event);
+    free(obj);
   }
-
-  free(obj);
 }
 
 char* printCalendar(const Calendar* obj) {
