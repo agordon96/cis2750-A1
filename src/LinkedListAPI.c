@@ -1,225 +1,242 @@
-#include "LinkedListAPI.h"
+/* CIS2750 F2017
+ * Assignment 0
+ * Aaron Gordon 0884023
+ * This file contains the implementation of the Linked List API
+ * This implementation is done completely from scratch (besides fetching function definitions from the given header file) since I
+ * took 2520 in a different year (upper year student).
+ */
 
-List initializeList(char *(*printFunction)(void *toBePrinted), void (*deleteFunction)(void *toBeDeleted), int (*compareFunction)(const void *first, const void *second)) {
-  List list;
+ #include "LinkedListAPI.h"
 
-  list.deleteData = deleteFunction;
-  list.compare = compareFunction;
-  list.printData = printFunction;
-  list.head = NULL;
-  list.tail = NULL;
+ List initializeList(char *(*printFunction)(void *toBePrinted), void (*deleteFunction)(void *toBeDeleted), int (*compareFunction)(const void *first, const void *second)) {
+   List list;
 
-  return list;
-}
+   list.deleteData = deleteFunction;
+   list.compare = compareFunction;
+   list.printData = printFunction;
+   list.head = NULL;
+   list.tail = NULL;
 
-Node *initializeNode(void *data) {
-  Node *node;
+   return list;
+ }
 
-  if(!data) {
-    return NULL;
-  }
+ Node *initializeNode(void *data) {
+   Node *node;
 
-  node = (Node*)malloc(sizeof(Node));
-  node->data = data;
-  node->previous = NULL;
-  node->next = NULL;
+   if(!data) {
+     return NULL;
+   }
 
-  return node;
-}
+   node = (Node*)malloc(sizeof(Node));
+   node->data = data;
+   node->previous = NULL;
+   node->next = NULL;
 
-void insertFront(List *list, void *toBeAdded) {
-  Node *node;
+   return node;
+ }
 
-  if(!list) {
-    return;
-  }
+ void insertFront(List *list, void *toBeAdded) {
+   Node *node;
 
-  node = initializeNode(toBeAdded);
-  if(list->head) {
-    list->head->previous = node;
-    node->next = list->head;
-    list->head = node;
-  } else {
-    list->head = node;
-    list->tail = node;
-  }
-}
+   if(!list) {
+     return;
+   }
 
-void insertBack(List *list, void *toBeAdded) {
-  Node *node;
+   node = initializeNode(toBeAdded);
+   if(list->head) {
+     list->head->previous = node;
+     node->next = list->head;
+     list->head = node;
+   } else {
+     list->head = node;
+     list->tail = node;
+   }
+ }
 
-  if(!list) {
-    return;
-  }
+ void insertBack(List *list, void *toBeAdded) {
+   Node *node;
 
-  node = initializeNode(toBeAdded);
-  if(list->tail) {
-    list->tail->next = node;
-    node->previous = list->tail;
-    list->tail = node;
-  } else {
-    list->head = node;
-    list->tail = node;
-  }
-}
+   if(!list) {
+     return;
+   }
 
-void clearList(List *list) {
-  Node *curr;
-  Node *next;
+   node = initializeNode(toBeAdded);
+   if(list->tail) {
+     list->tail->next = node;
+     node->previous = list->tail;
+     list->tail = node;
+   } else {
+     list->head = node;
+     list->tail = node;
+   }
+ }
 
-  if(!list) {
-    return;
-  }
+ void clearList(List *list) {
+   Node *curr;
+   Node *next;
 
-  curr = list->head;
-  while(curr) {
-    next = curr->next;
-    list->deleteData(curr->data);
-    free(curr);
-    curr = next;
-  }
-}
+   if(!list) {
+     return;
+   }
 
-void insertSorted(List *list, void *toBeAdded) {
-  Node *node;
-  Node *curr;
+   curr = list->head;
+   while(curr) {
+     next = curr->next;
+     list->deleteData(curr->data);
+     free(curr);
+     curr = next;
+   }
 
-  if(!list) {
-    return;
-  }
+   list->head = NULL;
+   list->tail = NULL;
+ }
 
-  node = initializeNode(toBeAdded);
-  curr = list->head;
+ void insertSorted(List *list, void *toBeAdded) {
+   Node *node;
+   Node *curr;
 
-  while(curr) {
-    if(list->compare(toBeAdded, curr->data) < 0) {
-      if(!curr->previous) {
-        curr->previous = node;
-        list->head = node;
-        list->head->next = curr;
-      } else {
-        curr->previous->next = node;
-        node->previous = curr->previous;
-        curr->previous = node;
-        node->next = curr;
-      }
+   if(!list) {
+     return;
+   }
 
-      break;
-    }
+   node = initializeNode(toBeAdded);
+   curr = list->head;
 
-    curr = curr->next;
-  }
+   while(curr) {
+     if(list->compare(toBeAdded, curr->data) < 0) {
+       if(!curr->previous) {
+         curr->previous = node;
+         list->head = node;
+         list->head->next = curr;
+       } else {
+         curr->previous->next = node;
+         node->previous = curr->previous;
+         curr->previous = node;
+         node->next = curr;
+       }
 
-  if(!curr && !list->head) {
-    list->head = node;
-    list->tail = node;
-  } else if(!curr) {
-    list->tail->next = node;
-    node->previous = list->tail;
-    list->tail = node;
-  }
-}
+       break;
+     }
 
-void *deleteDataFromList(List *list, void *toBeDeleted) {
-  Node *curr;
+     curr = curr->next;
+   }
 
-  if(!list) {
-    return NULL;
-  }
+   if(!curr && !list->head) {
+     list->head = node;
+     list->tail = node;
+   } else if(!curr) {
+     list->tail->next = node;
+     node->previous = list->tail;
+     list->tail = node;
+   }
+ }
 
-  if(!list->head) {
-    return NULL;
-  }
+ void *deleteDataFromList(List *list, void *toBeDeleted) {
+   Node *curr;
 
-  curr = list->head;
-  while(curr) {
-    if(list->compare(curr->data, toBeDeleted) == 0) {
-      list->deleteData(toBeDeleted);
-      break;
-    }
+   if(!list) {
+     return NULL;
+   }
 
-    curr = curr->next;
-  }
+   if(!list->head) {
+     return NULL;
+   }
 
-  if(curr) {
-    if(curr->previous) {
-      curr->previous->next = curr->next;
-    } else {
-      list->head = curr->next;
-    }
+   if(!toBeDeleted) {
+     return NULL;
+   }
 
-    if(curr->next) {
-      curr->next->previous = curr->previous;
-    } else {
-      list->tail = curr->previous;
-    }
+   curr = list->head;
+   while(curr) {
+     if(list->compare(curr->data, toBeDeleted) == 0) {
+       list->deleteData(curr->data);
+       break;
+     }
 
-    free(curr);
-  }
+     curr = curr->next;
+   }
 
-  return toBeDeleted;
-}
+   if(curr) {
+     if(curr->previous) {
+       curr->previous->next = curr->next;
+     } else {
+       list->head = curr->next;
+     }
 
-void *getFromFront(List list) {
-  if(!list.head) {
-    return NULL;
-  } else if(!list.head->data) {
-    return NULL;
-  }
+     if(curr->next) {
+       curr->next->previous = curr->previous;
+     } else {
+       list->tail = curr->previous;
+     }
 
-  return list.head->data;
-}
+     free(curr);
+   } else {
+     return NULL;
+   }
 
-void *getFromBack(List list) {
-  if(!list.tail) {
-    return NULL;
-  } else if(!list.tail->data) {
-    return NULL;
-  }
+   return toBeDeleted;
+ }
 
-  return list.tail->data;
-}
+ void *getFromFront(List list) {
+   if(!list.head) {
+     return NULL;
+   } else if(!list.head->data) {
+     return NULL;
+   }
 
-char *toString(List list) {
-  char *str = NULL;
-  char *tempStr;
-  int numChars = 0;
+   return list.head->data;
+ }
 
-  while(list.head) {
-    tempStr = list.printData(list.head->data);
-    numChars += strlen(tempStr);
+ void *getFromBack(List list) {
+   if(!list.tail) {
+     return NULL;
+   } else if(!list.tail->data) {
+     return NULL;
+   }
 
-    if(!str) {
-      str = (char*)malloc(numChars + 1);
-      strcpy(str, tempStr);
-    } else {
-      str = (char*)realloc(str, numChars + 1);
-      strcat(str, tempStr);
-    }
+   return list.tail->data;
+ }
 
-    list.head = list.head->next;
-    free(tempStr);
-  }
+ char *toString(List list) {
+   char *str = NULL;
+   char *tempStr;
+   int numChars = 0;
 
-  return str;
-}
+   while(list.head) {
+     tempStr = list.printData(list.head->data);
+     numChars += strlen(tempStr);
 
-ListIterator createIterator(List list) {
-  ListIterator iter;
+     if(!str) {
+       str = (char*)malloc(numChars + 1);
+       strcpy(str, tempStr);
+     } else {
+       str = (char*)realloc(str, numChars + 1);
+       strcat(str, tempStr);
+     }
 
-  iter.current = list.head;
-  return iter;
-}
+     list.head = list.head->next;
+     free(tempStr);
+   }
 
-void *nextElement(ListIterator *iter) {
-  void *data;
+   return str;
+ }
 
-  if(!iter || !iter->current) {
-    return NULL;
-  }
+ ListIterator createIterator(List list) {
+   ListIterator iter;
 
-  data = iter->current->data;
-  iter->current = iter->current->next;
+   iter.current = list.head;
+   return iter;
+ }
 
-  return data;
-}
+ void *nextElement(ListIterator *iter) {
+   void *data;
+
+   if(!iter || !iter->current) {
+     return NULL;
+   }
+
+   data = iter->current->data;
+   iter->current = iter->current->next;
+
+   return data;
+ }
