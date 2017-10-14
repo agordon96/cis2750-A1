@@ -193,13 +193,13 @@ ErrorCode createCalendar(char* fileName, Calendar** obj) {
   }
 
   while(fgets(line, sizeof(line), file)) {
-	if(line[0] == ';') {
-	  continue;
-	}
+    if(line[0] == ';') {
+      continue;
+    }
 	
-	if(line[strlen(line) - 2] != '\r' && line[strlen(line) - 2] != '\n') {
-	  return badError(cal, file, obj, INV_CAL);
-	}
+    if(line[strlen(line) - 2] != '\r' && line[strlen(line) - 2] != '\n') {
+      return badError(cal, file, obj, INV_CAL);
+    }
 	
     clearSpaces(line);
     token = strtok(line, ":;");
@@ -225,9 +225,9 @@ ErrorCode createCalendar(char* fileName, Calendar** obj) {
       }
 
       token = strtok(NULL, "");
-	  if(!token) {
-		return badError(cal, file, obj, INV_VER);
-	  }
+      if(!token) {
+	return badError(cal, file, obj, INV_VER);
+      }
 	  
       cal->version = atof(token);
 
@@ -258,19 +258,19 @@ ErrorCode createCalendar(char* fileName, Calendar** obj) {
       cal->event->alarms.head = NULL;
 
       while(fgets(line, sizeof(line), file) && inEvent) {
-		if(line[0] == ';') {
-		  continue;
-		}
-		
-		if(line[strlen(line) - 2] != '\r' && line[strlen(line) - 2] != '\n') {
-		  return badError(cal, file, obj, INV_CAL);
-		}
+	if(line[0] == ';') {
+	  continue;
+	}
+
+	if(line[strlen(line) - 2] != '\r' && line[strlen(line) - 2] != '\n') {
+	  return badError(cal, file, obj, INV_CAL);
+	}
 		
         clearSpaces(line);
         token = strtok(line, ":;");
-		if(!token) {
-		  return badError(cal, file, obj, INV_EVENT);
-		}
+	if(!token) {
+	  return badError(cal, file, obj, INV_EVENT);
+	}
 
         if(strcmp(toIgnore, "") != 0 && strcmp(token, "END") == 0) {
           token = strtok(NULL, "");
@@ -285,9 +285,9 @@ ErrorCode createCalendar(char* fileName, Calendar** obj) {
 
         if(strcmp(token, "END") == 0) {
           token = strtok(NULL, "");
-		  if(!token) {
-		    return badError(cal, file, obj, INV_EVENT);
-		  }
+	  if(!token) {
+	    return badError(cal, file, obj, INV_EVENT);
+	  }
 		  
           if(strcmp(token, "VEVENT") == 0 && !inAlarm) {
             if(strcmp(cal->event->UID, "") == 0 || strcmp(cal->event->creationDateTime.date, "") == 0) {
@@ -312,9 +312,9 @@ ErrorCode createCalendar(char* fileName, Calendar** obj) {
           }
         } else if(strcmp(token, "BEGIN") == 0) {
           token = strtok(NULL, "");
-		  if(!token) {
-		    return badError(cal, file, obj, INV_EVENT);
-		  }
+	  if(!token) {
+	    return badError(cal, file, obj, INV_EVENT);
+	  }
 		  
           if(strcmp(token, "VALARM") != 0 || inAlarm) {
             strcpy(toIgnore, token);
@@ -330,17 +330,17 @@ ErrorCode createCalendar(char* fileName, Calendar** obj) {
           if(inAlarm) {
             if(strcmp(token, "TRIGGER") == 0) {
               token = strtok(NULL, "");
-			  if(!token) {
-		        return badError(cal, file, obj, INV_EVENT);
-		      }
+	      if(!token) {
+		return badError(cal, file, obj, INV_EVENT);
+	      }
 		  
               alarm->trigger = (char*)malloc(sizeof(char) * strlen(token) + 1);
               strcpy(alarm->trigger, token);
             } else if(strcmp(token, "ACTION") == 0) {
               token = strtok(NULL, "");
-			  if(!token) {
-		        return badError(cal, file, obj, INV_EVENT);
-		      }
+	      if(!token) {
+		return badError(cal, file, obj, INV_EVENT);
+	      }
 			  
               strcpy(alarm->action, token);
             } else {
@@ -351,9 +351,9 @@ ErrorCode createCalendar(char* fileName, Calendar** obj) {
               prop = (Property*)malloc(sizeof(Property));
               strcpy(prop->propName, token);
               token = strtok(NULL, "");
-			  if(!token) {
-		        return badError(cal, file, obj, INV_EVENT);
-		      }
+	      if(!token) {
+		return badError(cal, file, obj, INV_EVENT);
+	      }
 			  
               prop = realloc(prop, sizeof(Property) + (sizeof(char) * strlen(token) + 1));
               strcpy(prop->propDescr, token);
@@ -401,9 +401,9 @@ ErrorCode createCalendar(char* fileName, Calendar** obj) {
             prop = (Property*)malloc(sizeof(Property));
             strcpy(prop->propName, token);
             token = strtok(NULL, "");
-			if(!token) {
-		      return badError(cal, file, obj, INV_EVENT);
-		    }
+            if(!token) {
+	      return badError(cal, file, obj, INV_EVENT);
+	    }
 			  
             prop = realloc(prop, sizeof(Property) + (sizeof(char) * strlen(token) + 1));
             strcpy(prop->propDescr, token);
