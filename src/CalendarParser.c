@@ -60,7 +60,7 @@ char* printFuncAlarm(void *toBePrinted) {
     strcat(toReturn, "\n");
   }
 
-	return toReturn;
+  return toReturn;
 }
 
 int compareFuncProp(const void *first, const void *second) {
