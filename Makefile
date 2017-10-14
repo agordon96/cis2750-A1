@@ -1,4 +1,4 @@
-all: list parser program clean
+all: list parser program lightClean
 
 LinkedListAPI.o: src/LinkedListAPI.c
 	gcc -Iinclude -c src/LinkedListAPI.c -o LinkedListAPI.o -Wall -std=c11
@@ -15,5 +15,8 @@ parser: CalendarParser.o LinkedListAPI.o
 program:
 	gcc -Iinclude -o Demo Demo.c bin/libllist.a bin/libcparse.a -Wall -std=c11
 
-clean:
+lightClean:
 	rm -f *.o *.so
+
+clean:
+	rm -f *.o *.so bin/*.a Demo
